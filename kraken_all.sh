@@ -1,21 +1,20 @@
 #!/bin/bash
 #SBATCH --partition scavenge
-#SBATCH --job-name=kraken_mini
-#SBATCH --array=1-4
-#SBATCH --error=kraken_mini.err
+#SBATCH --job-name=kraken_pneumo
+#SBATCH --array=1-6
+#SBATCH --error=kraken_%A_%a.err
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=16G
 #SBATCH --time=01:00:00
-#SBATCH --output=kraken_%j.log
+#SBATCH --output=kraken_%A_%a.log
 
-# Path to your NEW mini database folder
 module load miniconda
 eval "$(conda shell.bash hook)"
-conda activate /vast/palmer/scratch/weinberger_daniel/jk2666/zephyr_pneumo_project/envs/pneumo_capsule
+conda activate /nfs/roberts/scratch/pi_dmw63/jk2666/zephyr_pneumo_project/envs/pneumo_capsule
 
 
-BASE_DIR="/vast/palmer/scratch/weinberger_daniel/jk2666/zephyr_pneumo_project"
+BASE_DIR="/nfs/roberts/scratch/pi_dmw63/jk2666/zephyr_pneumo_project"
 DB_PATH="${BASE_DIR}/databases"
 DATA_DIR="${BASE_DIR}/data"
 SRR_FILE="${BASE_DIR}/srr_list.txt"
