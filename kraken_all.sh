@@ -1,6 +1,7 @@
 #!/bin/bash
 #SBATCH --partition scavenge
 #SBATCH --job-name=kraken_mini
+#SBATCH --array=1-4
 #SBATCH --error=kraken_mini.err
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
