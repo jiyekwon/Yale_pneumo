@@ -23,7 +23,7 @@ ACCESSION=$(sed -n "${SLURM_ARRAY_TASK_ID}p" $SRR_FILE)
 echo "Processing $ACCESSION (Task ID: $SLURM_ARRAY_TASK_ID)"
 
 # download
-fasterq-dump $ACCESSION --threads 8 --outdir $DATA_DIR
+fasterq-dump --split-files $ACCESSION --threads 8 --outdir $DATA_DIR
 fastp -i ${DATA_DIR}/${ACCESSION}.fastq -o ${DATA_DIR}/${ACCESSION}_trimmed.fastq --thread 8
 
 # 5. Run Kraken2
