@@ -1,0 +1,40 @@
+# macOS
+.DS_Store
+
+# Literature / documents (stay on OneDrive)
+*.pdf
+*.docx
+*.doc
+*.xlsx
+*.pptx
+
+# Large data files (stay on HPC scratch or OneDrive)
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+*.bam
+*.bam.bai
+*.sam
+*.kraken
+*.vcf
+*.vcf.gz
+
+# Kraken2 / analysis outputs
+*_report.txt
+*.log
+*.err
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# SLURM logs (generated on HPC)
+slurm-*.out
