@@ -1,0 +1,101 @@
+PCR-SEQ PNEUMOCOCCAL SEROTYPING PIPELINE
+=========================================
+
+PHASE 1: PRIMER & AMPLICON VALIDATION
+--------------------------------------
+1. Compile the full primer set
+   - Extract all forward/reverse pairs from Downs et al. (2023) supplementary data (92 serotype assays).
+   - Strip the probes; only primer sequences are needed for sequencing.
+
+2. Integrate Mallery's additional primers
+   - Add to the master table with target gene and serotype annotations.
+
+3. Amplicon size audit
+   - Run in silico PCR against a panel of NCBI pneumococcal reference genomes.
+   - Record amplicon size for each primer pair.
+   - Flag anything outside ~150-400 bp as needing redesign for Illumina compatibility.
+
+4. Cross-reactivity screen
+   - Computationally check all 92+ primer pairs against each other to detect potential mispriming.
+   - Design multiplex pools if necessary.
+
+5. Wet-lab confirmation
+   - Verify that primer pairs produce clean, single-band amplicons without TaqMan probes present
+     (probes stabilize qPCR reactions and are absent in this workflow).
+
+
+PHASE 2: REFERENCE DATABASE
+-----------------------------
+6. Build a CPS reference library
+   - Download capsular locus sequences (wzx, wzy, wzh, wciP, and other CPS genes) for all 92+
+     serotypes from NCBI.
+   - Format as FASTA with consistent naming (serotype, gene, accession).
+
+7. Curate ambiguous regions
+   - Identify serotypes within the same serogroup (e.g., 6A/6B, 19A/19F) with nearly identical
+     target sequences.
+   - Ensure the reference library can distinguish them at the nucleotide level.
+
+
+PHASE 3: BIOINFORMATICS PIPELINE
+----------------------------------
+8. Raw read QC
+   - Run FastQC / MultiQC on raw Illumina reads.
+
+9. Primer trimming
+   - Use Cutadapt to remove primer sequences from read ends.
+
+10. Read classification
+    - Align trimmed reads to the reference library (BWA-MEM or Bowtie2).
+    - Score alignments by coverage, identity, and breadth.
+
+11. Mixed infection quantification
+    - Calculate read proportions per serotype.
+    - Define thresholds for calling a serotype present (e.g., >=X% of reads, >=Y× coverage).
+
+12. Serotype caller
+    - Write logic that translates alignment statistics into a final serotype call.
+    - Defined output categories: single serotype, mixed infection, ambiguous, or no call.
+
+13. Automated reporting
+    - Generate a per-sample CSV (and optionally PDF) with:
+      serotype calls, read counts, coverage depth, quality flags.
+
+
+PHASE 4: VALIDATION
+--------------------
+14. Mock community test
+    - Run known single-serotype controls and defined mixed-serotype mixtures
+      (e.g., 90/10, 50/50 ratios) through the full pipeline.
+    - Measure sensitivity, specificity, and quantification accuracy.
+
+15. Comparison to gold standard
+    - Benchmark against Quellung reaction or culture-based serotyping on archived clinical samples
+      (as Downs et al. 2023 did).
+
+16. Edge case testing
+    - Test samples with closely related serogroups, low bacterial load, and high background DNA.
+
+
+KEY DECISION POINTS TO RESOLVE EARLY
+--------------------------------------
+- Illumina read length (2x150 vs 2x250)
+    Why: Determines maximum usable amplicon size.
+
+- Single-tube multiplex vs pooled separate reactions
+    Why: Affects cross-reactivity risk and library prep complexity.
+
+- Coverage threshold for a valid serotype call
+    Why: Core parameter governing sensitivity/specificity tradeoff.
+
+- Reference database source and versioning
+    Why: Critical for reproducibility across labs and over time.
+
+
+REFERENCES
+-----------
+- Downs et al. (2023). Optimization of a high-throughput nanofluidic real-time PCR to detect and
+  quantify 15 bacterial species and 92 Streptococcus pneumoniae serotypes. Scientific Reports, 13,
+  4588. https://doi.org/10.1038/s41598-023-31820-4
+- PCRSeqTyping (2017). Development of PCRSeqTyping - a novel molecular assay for typing of
+  Streptococcus pneumoniae. Pneumonia. https://doi.org/10.1186/s41479-017-0032-3

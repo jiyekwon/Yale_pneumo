@@ -1,6 +1,10 @@
 # macOS
 .DS_Store
 
+# Separate projects — tracked elsewhere or on OneDrive only
+zephyr/
+LitReview/
+
 # Literature / documents (stay on OneDrive)
 *.pdf
 *.docx
