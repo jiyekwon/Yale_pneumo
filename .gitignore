@@ -5,6 +5,9 @@
 zephyr/
 LitReview/
 
+# Internal notes (not for public repo)
+METHODS_INTERNAL.md
+
 # Literature / documents (stay on OneDrive)
 *.pdf
 *.docx
