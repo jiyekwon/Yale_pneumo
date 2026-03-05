@@ -1,40 +1,137 @@
 PCR-SEQ PNEUMOCOCCAL SEROTYPING PIPELINE
 =========================================
 
+CONCEPT
+--------
+One primer pair per serotype → one amplicon per serotype. Each amplicon contains the
+serotype-distinguishing region; reads run end to end across the amplicon. Three multiplex
+PCR pools (A, B, C) pre-amplify all targets; products feed directly into library prep.
+Primers are discrete targeted assays — NOT a tiled/overlapping scheme (like ARTIC/COVID).
+
+
 PHASE 1: PRIMER & AMPLICON VALIDATION
 --------------------------------------
-1. Compile the full primer set
-   - Extract all forward/reverse pairs from Downs et al. (2023) supplementary data (92 serotype assays).
-   - Strip the probes; only primer sequences are needed for sequencing.
+1. Compile the full primer set [DONE]
+   - 73 assay sets from Downs et al. (2023) covering 92 pneumococcal serotypes.
+   - 2 additional assays from Lancet Microbe (2023): 19C and 19F Atypical.
+   - Probes stripped; only forward/reverse primer sequences are used for sequencing.
+   - Saved: primers/downs2023_pneumo_primers.csv (75 assays)
+             primers/downs2023_other_bacteria_primers.csv (24 assays)
+             primers/lancet2023_additional_assays.csv (14 viral/additional assays)
 
-2. Integrate Mallery's additional primers
-   - Add to the master table with target gene and serotype annotations.
+2. Integrate additional primers from Lancet [DONE]
+   - 19C and 19F Atypical added from Lancet Microbe 2023.
+   - Pool assignments from Lancet 2023 Supp Table 4 supersede Downs 2023.
+   - Data provenance and known issues documented in primers/README.txt.
 
-3. Amplicon size audit
-   - Run in silico PCR against a panel of NCBI pneumococcal reference genomes.
-   - Record amplicon size for each primer pair.
-   - Flag anything outside ~150-400 bp as needing redesign for Illumina compatibility.
+3. In silico PCR — map primer binding sites and extract amplicon sequences [PARTIALLY DONE]
+   - Design: one amplicon per serotype; reads cover from forward primer to reverse primer.
+   - Tool: seqkit amplicon (v2.10.1) with up to 3 mismatches allowed.
+   - Reference: GlobalPneumoSeq SeroBA v2.0.5 (https://github.com/GlobalPneumoSeq/seroba).
+     Saved: reference/globalpneumoseq_seroba_v2_reference.fasta (129 sequences)
+     Old Sanger reference (102 seq) kept at reference/seroba_cps_reference.fasta for comparison.
+   - *** IN SILICO PCR RERUN REQUIRED against new reference ***
+     GlobalPneumoSeq v2 changes vs old Sanger SeroBA:
+       Added (33): 06AI–06AVI, 06BI–06BII (serogroup 6 sub-variants); 19AI–19AIII, 19AF,
+         19FI–19FIV (19A/19F genetic variants); 10D, 11F_like, 15D, 20A/B/C, 24C, 24F2,
+         33E, 33G, 33H, 36A, 36B; NCC1/NCC2/NCC3 (non-encapsulated types)
+       Removed/renamed (6): 39X→10D, 10X→33G, 20→20A/B/C, 36→36A/36B,
+         Swiss_NT and alternative_aliB_NT → NCC types
+     All downstream analyses (pairwise identity, resolution verdicts, final_resolution_summary.tsv)
+     must be RERUN. Current results in amplicon_audit/ are based on OLD Sanger DB.
+   - Script: scripts/run_insilico_pcr.py
+   - Results: amplicon_audit/amplicon_results.tsv, amplicon_audit/amplicon_raw.fasta
 
-4. Cross-reactivity screen
-   - Computationally check all 92+ primer pairs against each other to detect potential mispriming.
-   - Design multiplex pools if necessary.
+   Results summary (based on OLD Sanger SeroBA — pending rerun with GlobalPneumoSeq v2):
+   - 65 assays: binding location and amplicon sequence found in SeroBA CPS reference.
+   - 10 assays: NO hit in SeroBA CPS reference (even with 6 mismatches):
+       3, 14, 10A/B, 15A/B/C/F, 18C/F, 19F Atypical, 20, 22F, 25A/F, 35F/47F
+     Likely cause: these primers target genes outside the CPS locus (SeroBA covers CPS
+     only). Need full pneumococcal genome references from NCBI to locate binding sites.
+   - Note on amplicon sizes: most amplicons are 70–150 bp (qPCR-optimized design from
+     Downs 2023). Library prep approach must accommodate short amplicons — TBD (see below).
 
-5. Wet-lab confirmation
-   - Verify that primer pairs produce clean, single-band amplicons without TaqMan probes present
-     (probes stabilize qPCR reactions and are absent in this workflow).
+   DEFERRED: 10 no-hit assays — need full NCBI pneumococcal genome assemblies (SeroBA only
+   has CPS locus; these primers likely target genes elsewhere in the genome). Coverage of their
+   target serotypes is partially provided by other assays already. Return to this after
+   completing the pairwise identity check and cross-reactivity screen.
+
+4. Cross-reactivity screen [PENDING]
+   - Screen is pool-specific: Pool A primers vs. Pool A, Pool B vs. Pool B, Pool C vs. Pool C
+     (primers in separate pools are in separate reactions — cross-pool interaction irrelevant).
+   - For each pool: run in silico PCR with all intra-pool primer pairs against all reference
+     genomes; flag any pair producing an off-target amplicon at similar size.
+
+5. Wet-lab confirmation [PENDING]
+   - Verify primer pairs produce clean single-band amplicons without TaqMan probes.
+   - DPO/LNA modified primers: may require adjusted annealing temperature or Mg2+ conditions.
+   - Confirm 10 no-hit assays produce expected amplicons in wet lab.
+
+
+PHASE 1.5: LIBRARY PREP PROTOCOL [TBD]
+----------------------------------------
+General workflow: pre-amplification (3 pools) → combine pools → library prep → Illumina.
+Sequencing: 150 bp paired-end at Yale Center for Genome Analysis (YCGA).
+
+Key constraint to resolve:
+   - Most Downs primer pairs produce short amplicons (70–150 bp) because they were designed
+     for qPCR (short = efficient). Library prep kit must accommodate this.
+
+Open questions:
+   - Library prep kit — compatible with short amplicons?
+   - Pre-amplification cycle count and primer concentration per pool?
+   - DPO/LNA primer compatibility in standard multiplex PCR conditions?
+   - 3 separate library preps (one per pool) or combine all 3 pre-amp products first?
 
 
 PHASE 2: REFERENCE DATABASE
 -----------------------------
-6. Build a CPS reference library
-   - Download capsular locus sequences (wzx, wzy, wzh, wciP, and other CPS genes) for all 92+
-     serotypes from NCBI.
-   - Format as FASTA with consistent naming (serotype, gene, accession).
+6. Build amplicon reference library [PARTIALLY DONE — pending database switch]
+   - Source: SeroBA CPS database (reference/seroba_cps_reference.fasta, 102 serotypes,
+     OLD Sanger version). Not used as a typing tool — used as reference sequence source only.
+   - PENDING: Download GlobalPneumoSeq SeroBA v2 database and replace reference file.
+   - Amplicon sequences for 65 assays extracted via in silico PCR (amplicon_audit/amplicon_raw.fasta).
+   - Remaining 10 assays: need NCBI full genome references to extract their amplicon sequences.
+   - Final reference: FASTA of per-serotype amplicon sequences (not full CPS loci) for alignment.
 
-7. Curate ambiguous regions
-   - Identify serotypes within the same serogroup (e.g., 6A/6B, 19A/19F) with nearly identical
-     target sequences.
-   - Ensure the reference library can distinguish them at the nucleotide level.
+7. Curate ambiguous regions [PARTIALLY DONE]
+   - Script: scripts/pairwise_identity.py
+   - Compares amplicon sequences for INTENDED targets only (parsed from assay name).
+     Cross-reactive hits on non-intended serotypes are separated out, not included in verdicts.
+   - Results: amplicon_audit/pairwise_identity.tsv, amplicon_audit/resolution_summary.tsv,
+              amplicon_audit/cross_reactive_hits.tsv
+
+   Resolution verdicts for 65 assays (intended targets only):
+   - SINGLE_TARGET (35): one intended serotype per assay — unambiguous.
+   - INDISTINGUISHABLE (15): amplicon sequence identical across all intended sub-types —
+     sequencing resolution ceiling = serogroup level only (same as qPCR probe limit).
+       10C/F, 11A/D, 11B/C, 15B/C, 19B/F, 24B/F, 25A/F/38, 28A/F, 32A/F,
+       33A/F/37, 47A/F, 6C/D, 7A/F, 9A/V, 9L/N
+   - NEAR-IDENTICAL (2): >99% identity — very difficult; SNP-level calling required.
+       15A/F (99.1%), 7B/C/40 (99.3%)
+   - LIKELY_RESOLVABLE (10): 95–99% identity — SNPs present, needs good read depth.
+       6A/B/C/D, 6A/C, 9A/L/N/V, 11A/B/C/D/F, 12A/B/F/44/46, 18B/C/F,
+       23A/B/F, 34/37/17A, 35A/C/42, 18F(16F/18F)
+   - RESOLVABLE (3): clear sequence differences, sub-type resolution expected.
+       18A/B/C/F (86.7%), 33B/C (91.1%), 22A/F (0% — likely different gene targets)
+
+   Cross-reactive hits: 101 amplicons produced by assays on non-intended serotypes.
+   Top offenders: 19F (41), 34/37/17A (9), 11A/D (6), 11F (6), 6A/C (5).
+   Full list in amplicon_audit/cross_reactive_hits.tsv → input for Step 4 screen.
+
+   Combinatorial resolution — using pattern of results across ALL assays simultaneously:
+   - Script: scripts/combinatorial_resolution.py
+   - Results: amplicon_audit/combinatorial_resolution.tsv
+   - 4 previously-INDISTINGUISHABLE pairs rescued by combination:
+       11B vs 11C  → resolved by 11A/B/C/D/F assay (97.3%)
+       10C vs 10F  → resolved by 10B assay (19.9% — very different)
+       06C vs 06D  → resolved by 6A/B/C/D and 6A/C assays (97.2–97.4%)
+       19B vs 19F  → resolved by 19F assay (98.4%)
+   - Truly confirmed indistinguishable (multiple independent assays all agree):
+       09A/09V, 11A/11D, 28A/28F, 23B/23B1, 06B/06D/06F
+   - NOTE: 19F assay is cross-reacting with 41 serotypes, producing identical amplicons
+     for all of them. This artificially inflates the "indistinguishable" count and is the
+     highest-priority problem to investigate before any further analysis.
 
 
 PHASE 3: BIOINFORMATICS PIPELINE
@@ -46,56 +143,94 @@ PHASE 3: BIOINFORMATICS PIPELINE
    - Use Cutadapt to remove primer sequences from read ends.
 
 10. Read classification
-    - Align trimmed reads to the reference library (BWA-MEM or Bowtie2).
-    - Score alignments by coverage, identity, and breadth.
+    - Align trimmed reads to the amplicon reference library (BWA-MEM or Bowtie2).
+    - Score alignments by coverage, identity, and breadth across each amplicon.
 
 11. Mixed infection quantification
     - Calculate read proportions per serotype.
     - Define thresholds for calling a serotype present (e.g., >=X% of reads, >=Y× coverage).
 
 12. Serotype caller
-    - Write logic that translates alignment statistics into a final serotype call.
-    - Defined output categories: single serotype, mixed infection, ambiguous, or no call.
+    - Translate alignment statistics into final serotype call.
+    - Output categories: single serotype, mixed infection, ambiguous, or no call.
+    - Reference SeroBA and PneumoCaT typing logic for resolving ambiguous serogroups.
 
 13. Automated reporting
-    - Generate a per-sample CSV (and optionally PDF) with:
-      serotype calls, read counts, coverage depth, quality flags.
+    - Per-sample CSV (and optionally PDF): serotype calls, read counts, coverage depth, flags.
 
 
 PHASE 4: VALIDATION
 --------------------
 14. Mock community test
-    - Run known single-serotype controls and defined mixed-serotype mixtures
-      (e.g., 90/10, 50/50 ratios) through the full pipeline.
+    - Single-serotype controls and defined mixed-serotype mixtures (90/10, 50/50 ratios).
     - Measure sensitivity, specificity, and quantification accuracy.
 
 15. Comparison to gold standard
-    - Benchmark against Quellung reaction or culture-based serotyping on archived clinical samples
-      (as Downs et al. 2023 did).
+    - Benchmark against Quellung reaction or culture-based serotyping on archived clinical
+      samples (as Downs et al. 2023 did).
 
 16. Edge case testing
-    - Test samples with closely related serogroups, low bacterial load, and high background DNA.
+    - Closely related serogroups, low bacterial load, high background DNA.
 
 
-KEY DECISION POINTS TO RESOLVE EARLY
---------------------------------------
-- Illumina read length (2x150 vs 2x250)
-    Why: Determines maximum usable amplicon size.
+KEY DECISION POINTS
+--------------------
+- Library prep kit — must accommodate short amplicons (70–150 bp); confirm with Mallery.
 
-- Single-tube multiplex vs pooled separate reactions
-    Why: Affects cross-reactivity risk and library prep complexity.
+- DPO/LNA primer compatibility in standard multiplex PCR
+    Why: Modified primers may require different conditions than standard primers in same pool.
+
+- Pre-amplification cycles and per-primer concentration
+    Why: Too few cycles = low yield; too many = chimeric reads. Balance critical with 20-25
+    primer pairs per pool.
 
 - Coverage threshold for a valid serotype call
-    Why: Core parameter governing sensitivity/specificity tradeoff.
+    Why: Core sensitivity/specificity tradeoff parameter.
 
-- Reference database source and versioning
-    Why: Critical for reproducibility across labs and over time.
+- Reference database versioning
+    Why: Critical for reproducibility; new serotypes added over time (e.g., 19C, 19F Atypical).
+
+
+PROJECT FILE STRUCTURE
+-----------------------
+Yale_pneumo/
+├── pipeline_summary.txt             — this file (canonical version)
+├── primers/
+│   ├── README.txt                   — data provenance, changelog, known issues
+│   ├── downs2023_pneumo_primers.csv — 75 pneumo assays (primary)
+│   ├── downs2023_other_bacteria_primers.csv — 24 non-pneumo assays
+│   ├── lancet2023_additional_assays.csv     — 14 viral/additional assays
+│   └── primer_table_for_seqkit.tsv  — formatted input for seqkit amplicon (87 entries)
+├── reference/
+│   ├── seroba_cps_reference.fasta              — OLD Sanger SeroBA (102 seq, kept for reference)
+│   ├── globalpneumoseq_seroba_v2_reference.fasta — GlobalPneumoSeq SeroBA v2.0.5 (129 seq) [ACTIVE]
+│   ├── globalpneumoseq_seroba_v2_meta.tsv        — serotype metadata
+│   └── globalpneumoseq_seroba_v2_genetic_variants.csv — genetic variant definitions
+├── amplicon_audit/
+│   ├── amplicon_results.tsv         — in silico PCR results (size, location, flags)
+│   ├── amplicon_raw.fasta           — extracted amplicon sequences (65 assays)
+│   ├── pairwise_identity.tsv        — pairwise identity (intended targets only)
+│   ├── resolution_summary.tsv      — per-assay resolution verdict
+│   └── cross_reactive_hits.tsv     — amplicons on non-intended serotypes (Step 4 input)
+├── amplicon_audit/ (continued)
+│   └── combinatorial_resolution.tsv — cross-assay serotype-pair resolution verdicts
+├── scripts/
+│   ├── run_insilico_pcr.py          — seqkit amplicon wrapper + result parser
+│   ├── pairwise_identity.py         — pairwise identity check (intended targets only)
+│   └── combinatorial_resolution.py  — cross-assay combinatorial resolution matrix
+├── zephyr/                          — separate project (git-ignored)
+└── LitReview/                       — source PDFs/docx (git-ignored)
 
 
 REFERENCES
 -----------
-- Downs et al. (2023). Optimization of a high-throughput nanofluidic real-time PCR to detect and
-  quantify 15 bacterial species and 92 Streptococcus pneumoniae serotypes. Scientific Reports, 13,
-  4588. https://doi.org/10.1038/s41598-023-31820-4
-- PCRSeqTyping (2017). Development of PCRSeqTyping - a novel molecular assay for typing of
-  Streptococcus pneumoniae. Pneumonia. https://doi.org/10.1186/s41479-017-0032-3
+- Downs et al. (2023). Scientific Reports, 13, 4588.
+  https://doi.org/10.1038/s41598-023-31820-4
+- Olwagen et al. (2023). Lancet Microbe.
+  (Additional assays: 19C, 19F Atypical, 14 viral targets)
+- PCRSeqTyping (2017). Pneumonia.
+  https://doi.org/10.1186/s41479-017-0032-3
+- SeroBA v2 (GlobalPneumoSeq) — updated CPS reference database, actively maintained.
+  https://github.com/GlobalPneumoSeq/seroba  [USE THIS — v2.0.5, Aug 2025]
+- SeroBA (original, Wellcome Sanger Institute) — DEPRECATED, unmaintained.
+  https://github.com/sanger-pathogens/seroba
