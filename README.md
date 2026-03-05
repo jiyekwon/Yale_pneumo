@@ -17,7 +17,7 @@ replacing probe-based detection with sequence-based identification.
 |--------|--------|----------|
 | Downs et al. (2023), *Sci Rep* | 73 assay sets | 92 pneumococcal serotypes |
 | Olwagen et al. (2023), *Lancet Microbe* | 2 additional | 19C, 19F Atypical |
-| **Total pneumococcal** | **75 assay sets** | **94 serotypes** |
+| **Total** | **75 assay sets** | **94 serotypes** |
 
 Pool assignments (A/B/C) follow Lancet 2023 Supplementary Table 4, which supersedes
 Downs 2023. Probes are stripped; only forward/reverse primers are used.
@@ -91,3 +91,4 @@ python3 scripts/generate_final_summary.py # integrate all → final_resolution_s
 
 4. **seqkit** — A cross-platform and ultrafast toolkit for FASTA/Q file manipulation.
    https://doi.org/10.1371/journal.pone.0163962
+
