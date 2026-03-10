@@ -34,6 +34,14 @@ OUT_FILE = PROJECT / "amplicon_audit" / "final_resolution_summary.tsv"
 # Max amplicon bp to consider a GenBank hit "real" (qPCR context)
 GB_MAX_BP = 500
 
+# ─── Explicit remapping — must stay in sync with pairwise_identity.py ────────
+# See pairwise_identity.py for full rationale.
+ASSAY_TARGET_REMAP = {
+    "19F Atypical": ["19AF"],
+    "20":           ["20A", "20B", "20C"],
+    "36":           ["36A", "36B"],
+}
+
 # ─── Helpers (mirrors parse_intended from pairwise_identity.py) ──────────────
 def parse_intended(assay_name):
     name = assay_name
@@ -119,7 +127,7 @@ out_rows = []
 for row in sum_rows:
     assay   = row["Assay_Set"]
     verdict = row["Verdict"]
-    intended = parse_intended(assay)
+    intended = ASSAY_TARGET_REMAP.get(assay, parse_intended(assay))
     n_intended = len(intended)
 
     intended_str = ", ".join(intended) if intended else assay
@@ -192,7 +200,7 @@ for row in sum_rows:
 
 # ─── Add SeroBA no-hit assays ─────────────────────────────────────────────────
 for assay in sorted(no_hit_assays):
-    intended = parse_intended(assay)
+    intended = ASSAY_TARGET_REMAP.get(assay, parse_intended(assay))
     intended_str = ", ".join(intended) if intended else assay
 
     if assay in gb_valid_assays:

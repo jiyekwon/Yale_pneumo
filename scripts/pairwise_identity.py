@@ -25,6 +25,23 @@ OUT_PW    = PROJECT / "amplicon_audit" / "pairwise_identity.tsv"
 OUT_SUM   = PROJECT / "amplicon_audit" / "resolution_summary.tsv"
 OUT_XREACT = PROJECT / "amplicon_audit" / "cross_reactive_hits.tsv"
 
+# ─── Explicit remapping for assays whose names don't parse to GlobalPneumoSeq v2 labels ──
+# Reason: GlobalPneumoSeq SeroBA v2 renamed/split several serotypes relative to older
+# naming conventions used in the Downs 2023 primer panel. Rather than mutating the
+# general parser, we override intended targets per assay here.
+#
+#   "20"           → 20A/B/C   : v2 split serotype 20 into three subtypes
+#   "36"           → 36A/B     : v2 split serotype 36 into two subtypes
+#   "19F Atypical" → 19AF      : v2 uses '19AF'; parse_intended() wrongly yields
+#                                ["19F", "19ATYPICAL"] from the two-word name
+#
+# If future DB updates add further renames, append entries here.
+ASSAY_TARGET_REMAP = {
+    "19F Atypical": ["19AF"],
+    "20":           ["20A", "20B", "20C"],
+    "36":           ["36A", "36B"],
+}
+
 # ─── Parse intended targets from assay name ───────────────────────────────────
 def parse_intended(assay_name):
     """
@@ -118,7 +135,7 @@ xreact_rows = []
 
 for assay, sero_seqs in sorted(assay_to_seqs.items()):
     all_hit      = set(sero_seqs.keys())
-    intended_raw = parse_intended(assay)
+    intended_raw = ASSAY_TARGET_REMAP.get(assay, parse_intended(assay))
     # Only keep intended targets that actually produced an amplicon
     intended = [s for s in intended_raw if s in all_hit]
     # Cross-reactive = produced an amplicon but not in intended list
