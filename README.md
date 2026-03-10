@@ -64,6 +64,29 @@ Full output: `amplicon_audit/final_resolution_summary.tsv`
 - 32A / 32F
 - 33A / 33F / 37
 
+### Serotype-level Coverage
+
+97 unique serotypes tracked (94 original + 3 from GlobalPneumoSeq v2 splits:
+20→20A/B/C, 36→36A/36B). Best-achievable status per serotype:
+
+| Status | N | Serotypes |
+|--------|--:|-----------|
+| UNIQUE | 36 | 01, 02, 04, 05, 08, 10B, 11F, 12B, 13, 14, 16A, 16F, 17A, 17F, 19A, 19AF, 19C, 19F, 21, 23B, 23F, 24A, 27, 29, 31, 33C, 33D, 34, 35B, 39, 41A, 41F, 43, 45, 46, 48 |
+| CONFIRMED (GenBank) | 2 | 03, 22F |
+| RESCUED (combinatorial) | 26 | 06C, 06D, 07A, 07F, 09A, 09L, 09N, 09V, 10C, 10F, 11B, 11C, 15B, 15C, 19B, 24B, 24F, 25A, 25F, 28A, 28F, 36A, 36B, 38, 47A, 47F |
+| RESOLVABLE | 10 | 10A, 15A, 15F, 18A, 18B, 18C, 18F, 22A, 33B, 35F |
+| LIKELY_RESOLVABLE | 13 | 06A, 06B, 11A, 11D, 12A, 12F, 23A, 28AF, 35A, 35C, 37, 42, 44 |
+| NEAR-IDENTICAL | 3 | 07B, 07C, 40 |
+| INDISTINGUISHABLE | 7 | 20A, 20B, 20C, 32A, 32F, 33A, 33F |
+| **Total** | **97** | |
+
+**Fully resolved at serotype level: 64/97 (66%)**
+
+> **Note:** 11A, 11D, and 37 appear as LIKELY_RESOLVABLE above because the best-status
+> logic picks up other assays that co-amplify them. Their primary discriminating assays
+> (11A/D, 33A/F/37) are confirmed INDISTINGUISHABLE — these remain hard serogroup ceilings
+> alongside 20A/B/C, 32A/F, and 33A/33F.
+
 ## Running the Pipeline
 
 ```bash
