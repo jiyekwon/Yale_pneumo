@@ -95,10 +95,11 @@ python3 scripts/generate_final_summary.py # integrate all → final_resolution_s
    https://doi.org/10.1099/mgen.0.001483
    GitHub: https://github.com/GlobalPneumoSeq/seroba
 
-4. **Nzenze SA, et al.** High-throughput nanofluidic real-time PCR to discriminate
-   Pneumococcal Conjugate Vaccine (PCV)-associated serogroups 6, 18, and 22 to
-   serotypes using modified oligonucleotides. (Source of wchK/wcwA/wcxM assay designs
-   and GenBank accession LT594600 for serotype 22F.)
+4. **Downs SL, et al.** (2021). High-throughput nanofluidic real-time PCR to discriminate
+   Pneumococcal Conjugate Vaccine (PCV)-associated serogroups 6, 18, and 22 to serotypes
+   using modified oligonucleotides. *Scientific Reports*, 11, 23625.
+   https://doi.org/10.1038/s41598-021-03127-9
+   (Source of wchK/wcwA/wcxM assay designs and GenBank accession LT594600 for serotype 22F.)
 
 5. **seqkit** — A cross-platform and ultrafast toolkit for FASTA/Q file manipulation.
    https://doi.org/10.1371/journal.pone.0163962
