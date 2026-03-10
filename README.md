@@ -35,26 +35,32 @@ Downs 2023. Probes are stripped; only forward/reverse primers are used.
 
 ## Results Summary
 
-**75 assay sets covering 94 pneumococcal serotypes** (against SeroBA v2 CPS reference):
-as of March 5, 2026. 
+**75 assay sets covering 94 pneumococcal serotypes** (against GlobalPneumoSeq SeroBA v2.0.5
+CPS reference + GenBank supplement); as of March 10, 2026.
 
-| Final Status | Assays |
-|--------------|-------:|
-| UNIQUE | 35 |
-| RESCUED (combinatorial) | 13 |
-| RESOLVABLE | 7 |
-| LIKELY_RESOLVABLE | 10 |
-| NEAR-IDENTICAL | 2 |
-| INDISTINGUISHABLE | 3 |
-| NO_INTENDED_HIT | 3 |
-| CONFIRMED (GenBank) | 1 |
-| NO_HIT | 1 |
-| **Total** | **75** |
+| Final Status | Assays | Description |
+|--------------|-------:|-------------|
+| UNIQUE | 36 | Amplicon unique to intended serotype(s); directly identifiable |
+| RESCUED (combinatorial) | 14 | Indistinguishable in primary assay but resolved by cross-assay logic |
+| CONFIRMED (GenBank) | 2 | Target gene outside SeroBA CPS locus; confirmed via full-genome GenBank record |
+| RESOLVABLE | 7 | Clear sequence differences in primary assay (>3% divergence) |
+| LIKELY_RESOLVABLE | 10 | Moderate sequence differences; likely resolvable with sufficient read depth |
+| NEAR-IDENTICAL | 2 | Minimal divergence; may require long-read or allele-aware methods |
+| INDISTINGUISHABLE | 4 | Identical amplicons across all shared assays — hard serogroup ceiling |
+| NO_HIT | 0 | — |
+| **Total** | **75** | |
 
 Full output: `amplicon_audit/final_resolution_summary.tsv`
 
+**Fully resolved: 52/75 assays (69%)** — no assays remain without an amplicon reference.
+
+**GenBank supplement** (serotypes whose target gene lies outside the SeroBA CPS locus):
+- Serotype **3** — `tnp` gene; confirmed via CR931634
+- Serotype **22F** — `wcwA` gene; confirmed via LT594600 (SSI-22F strain)
+
 **Truly indistinguishable pairs** (identical amplicons across all shared assays):
 - 11A / 11D
+- 20 (20A / 20B / 20C)
 - 32A / 32F
 - 33A / 33F / 37
 
@@ -89,6 +95,11 @@ python3 scripts/generate_final_summary.py # integrate all → final_resolution_s
    https://doi.org/10.1099/mgen.0.001483
    GitHub: https://github.com/GlobalPneumoSeq/seroba
 
-4. **seqkit** — A cross-platform and ultrafast toolkit for FASTA/Q file manipulation.
+4. **Nzenze SA, et al.** High-throughput nanofluidic real-time PCR to discriminate
+   Pneumococcal Conjugate Vaccine (PCV)-associated serogroups 6, 18, and 22 to
+   serotypes using modified oligonucleotides. (Source of wchK/wcwA/wcxM assay designs
+   and GenBank accession LT594600 for serotype 22F.)
+
+5. **seqkit** — A cross-platform and ultrafast toolkit for FASTA/Q file manipulation.
    https://doi.org/10.1371/journal.pone.0163962
 
